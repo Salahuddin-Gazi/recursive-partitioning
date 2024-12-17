@@ -1,7 +1,10 @@
-export default function MainComponent({ firstComponent = true, children = [], direction = 'row', onClick }) {
+import { Fragment } from 'react';
+
+export default function MainComponent({ firstComponent = true, children = [], direction = 'row', onClick, color }) {
   return (
     <div
-      className={`h-full w-full flex flex-1 justify-center items-center relative border border-red-300 container`}
+      className={`h-full w-full flex flex-1 justify-center items-center relative`}
+      style={{backgroundColor: color}}
     >
       <div className="flex justify-center items-center gap-x-1">
         <button
@@ -22,7 +25,7 @@ export default function MainComponent({ firstComponent = true, children = [], di
             id="minus"
             onClick={onClick}
           >
-            <div className="bg-slate-800 w-[16px] h-[1.5px]"></div>
+            <span className="bg-slate-800 w-[16px] h-[1.5px] block"></span>
           </button>
         )}
       </div>
@@ -31,7 +34,9 @@ export default function MainComponent({ firstComponent = true, children = [], di
           className={`flex flex-${direction} justify-center items-center absolute left-0 top-0 w-full h-full bg-white`}
           style={{ flexDirection: direction }}
         >
-          {children}
+          {children.map((child, index) => (
+            <Fragment key={child.id || index}>{child}</Fragment> // Use a unique identifier like `id`
+          ))}
         </div>
       )}
     </div>

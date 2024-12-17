@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { ComponentTree } from './utils/componentTree';
 import MainComponent from './components/MainComponent';
+import { getRandomHexColor } from './utils/colorGenerator';
 
 function App() {
   const [root, setRoot] = useState(() => {
@@ -14,27 +15,12 @@ function App() {
     if (parentNodeClone) {
       parentNodeClone.direction = direction;
       const newChild1 = new ComponentTree(<MainComponent firstComponent={false} direction={direction} />, direction);
-      const newChild2 = new ComponentTree(<MainComponent firstComponent={false} direction={direction} />, direction);
+      const newChild2 = new ComponentTree(<MainComponent firstComponent={false} direction={direction} />, direction, parentNodeClone.color);
       parentNodeClone.addChild(newChild1)
       parentNodeClone.addChild(newChild2)
       setRoot(newRoot);
     }
   }, [root])
-
-  // const removeChildrenFromTree = useCallback((nodeToRemove) => {
-  //   if (!nodeToRemove || !nodeToRemove.parent) return;
-
-  //   const newRoot = root.clone();
-  //   const parentNodeClone = findNodeById(newRoot, nodeToRemove.parent.id);
-  //   const nodeToRemoveClone = findNodeById(newRoot, nodeToRemove.id);
-
-  //   if (parentNodeClone && nodeToRemoveClone) {
-  //     // Remove *both* children of the parent:
-  //     // parentNodeClone.children = []; // Simplest and most efficient way
-  //     parentNodeClone.removeAllChildren();
-  //     setRoot(newRoot);
-  //   }
-  // }, [root]);
 
   const removeChildrenFromTree = useCallback((nodeToRemove) => {
     if (!nodeToRemove || !nodeToRemove.parent) return;
@@ -44,27 +30,22 @@ function App() {
     const nodeToRemoveClone = findNodeById(newRoot, nodeToRemove.id);
 
     if (parentNodeClone && nodeToRemoveClone) {
-      const siblings = parentNodeClone.children.filter(child => child.id !== nodeToRemoveClone.id);
+      const siblings = parentNodeClone.removeChild(nodeToRemoveClone);
+      console.log(`🔥 ~ removeChildrenFromTree ~ siblings:`, siblings)
 
-      if (siblings.length === 1) {
-        if (siblings[0].children.length === 0) {
-          // Check if parent still exists in the tree before removing
-          if (parentNodeClone.parent) { // Crucial check!
-            const grandParentClone = findNodeById(newRoot, parentNodeClone.parent.id);
-            if (grandParentClone) {
-              grandParentClone.removeChild(parentNodeClone);
-            }
-          }
-        } else {
-          parentNodeClone.removeChild(nodeToRemoveClone);
+      if (siblings.length == 0) {
+        let tempNode = parentNodeClone;
+
+        while (tempNode.parent && tempNode.parent.children.length < 2) {
+          tempNode = tempNode.parent
         }
-      } else if (siblings.length === 0) {
-        // Check if parent still exists in the tree before removing
-        if (parentNodeClone.parent) { // Crucial check!
-          const grandParentClone = findNodeById(newRoot, parentNodeClone.parent.id);
-          if (grandParentClone) {
-            grandParentClone.removeChild(parentNodeClone);
-          }
+
+        if (!tempNode.parent) {
+          newRoot.removeAllChildren();
+        } else {
+          const grandParentClone = findNodeById(newRoot, tempNode.parent.id);
+          const nodeToRemoveClone = findNodeById(newRoot, tempNode.id);
+          grandParentClone?.removeChild(nodeToRemoveClone);
         }
       }
       setRoot(newRoot);
@@ -87,6 +68,7 @@ function App() {
   const renderTree = (node) => {
     return React.cloneElement(node.component, {
       direction: node.direction,
+      color: node.color,
       children: node.children.map(renderTree),
       onClick: (e) => {
         e.stopPropagation();
